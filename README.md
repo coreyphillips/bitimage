@@ -13,7 +13,7 @@ This project accepts any file and uses bitcoinjs-lib (https://bitcoinjs.org/) to
 
 ## Installation/Setup
 
-- Download or clone the repo: `git clone https://github.com/coreyphillips/image-to-bitcoin.git`
+- Download or clone the repo: `git clone https://github.com/coreyphillips/bitimage.git`
 - Open `index.html` in a browser of your choice
 
 ## Warning
