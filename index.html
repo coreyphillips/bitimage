@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bitcoin Image</title>
+    <script type="text/javascript" src="bitcoinjs.min.js"></script>
+    <script type="text/javascript" src="bigi.min.js"></script>
+    <script type="text/javascript" src="qrcode.js"></script>
+</head>
+<body>
+<header>
+    <h1>A picture is worth a thousand satoshis</h1>
+</header>
+<article>
+    <h2>Turn Any Image Or Document Into A Bitcoin Private Key & Address</h2>
+    <label for="files">Select a file you would like to turn into a Bitcoin address:</label>
+    <input id="files" type="file" multiple/>
+    <output id="result" />
+</article>
+</body>
+</html>
+
+<style>
+    body {
+        font-family: 'Segoe UI';
+        font-size: 12pt;
+        word-wrap: break-word;
+    }
+
+    header {
+        background-color: #29bb9c;
+    }
+    header h1 {
+        width: 80%;
+        margin:auto;
+        font-size:14pt;
+        color: #fff;
+        padding: 20px;
+    }
+    article {
+        width: 80%;
+        margin:auto;
+        margin-top:10px;
+    }
+
+    .container {
+        display: table;
+        width: 100%;
+    }
+
+    .cell {
+        display: table-cell;
+        vertical-align: middle;
+        height: 200px;
+    }
+
+    .content {
+        float: left;
+    }
+
+    .content2 {
+        float: right;
+    }
+
+    .filename {
+        margin: 20px 10px 10px 0px;
+    }
+
+
+    .thumbnail {
+        height: 100px;
+        margin: 20px 10px 10px 0px;
+    }
+
+    #privKey {
+        margin-bottom: 0px;
+    }
+
+    #privQr {
+        margin-top: 0px;
+        margin-left: -8px;
+    }
+
+    #bitcoinQr {
+        margin-bottom: 0px;
+    }
+</style>
+
+<script>
+    window.onload = function(){
+
+        //Check File API support
+        if (window.File && window.FileList && window.FileReader) {
+            var filesInput = document.getElementById("files");
+
+            filesInput.addEventListener("change", function(event){
+
+                var files = event.target.files;
+                var output = document.getElementById("result");
+
+                for(var i = 0; i< files.length; i++) {
+                    var file = files[i];
+                    var fileName = file.name;
+
+                    var picReader = new FileReader();
+
+                    picReader.addEventListener("load",function(event) {
+
+                        var picFile = event.target;
+
+                        //Setup Bitcoin Address
+                        var hash = Bitcoin.crypto.sha256(picFile.result);
+                        var d = bigi.fromBuffer(hash);
+                        var keyPair = new Bitcoin.ECPair(d);
+                        var privateKey = keyPair.toWIF();
+                        var address = keyPair.getAddress();
+
+                        //Setup QRCode
+                        var typeNumber = 14;
+                        var errorCorrectionLevel = 'H';
+                        var qr = qrcode(typeNumber, errorCorrectionLevel);
+                        qr.addData(address);
+                        qr.make();
+
+                        var privQr = qrcode(8, errorCorrectionLevel);
+                        privQr.addData(privateKey);
+                        privQr.make();
+
+                        var div = document.createElement("div");
+
+                        if (picFile.result.substr(0, 10) === "data:image") {
+                            var url = "https://blockchain.info/address/"+address;
+                            div.innerHTML =
+                                    "<div class='container'><div class='cell'><div class='content'>" +
+                                    "<img class='thumbnail' src='" + picFile.result + "'" + "title='" + fileName + "'/>" +
+                                    "<br /><span>Bitcoin Address: </span><a href='"+ url +"' target='_blank'>" + address + "</a>" +
+                                    "<p>Private Key: " + privateKey + "</p><p id='privKey'>Private Key:</p><p id='privQr'>"+ privQr.createImgTag() +"</p></div></div>" +
+                                    "<div class='cell'><div class='content2'><p id='bitcoinQr' align='center'>Bitcoin Address</p>"+ qr.createImgTag() +"</div></div>" +
+                                    "</div><hr>";
+                        } else {
+                            var url = "https://blockchain.info/address/"+address;
+                            div.innerHTML =
+                                    "<div class='container'><div class='cell'><div class='content'>" +
+                                    "<p class='filename'>"+ fileName +"</p><span>Bitcoin Address: </span><a href='"+ url +"' target='_blank'>" + address + "</a>" +
+                                    "<p>Private Key: " + privateKey + "</p><p id='privKey'>Private Key:</p><p id='privQr'>"+ privQr.createImgTag() +"</p></div></div>" +
+                                    "<div class='cell'><div class='content2'><p id='bitcoinQr' align='center'>Bitcoin Address</p>"+ qr.createImgTag() +"</div></div>" +
+                                    "</div><hr>";
+                        }
+
+                        output.insertBefore(div,null);
+
+                    });
+
+                    //Read the image
+                    picReader.readAsDataURL(file);
+                }
+
+            });
+        }
+        else
+        {
+            console.log("Your browser does not support File API");
+        }
+    }
+</script>
