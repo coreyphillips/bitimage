@@ -5,6 +5,7 @@
     <title>Bitcoin Image</title>
     <script type="text/javascript" src="bitcoinjs.min.js"></script>
     <script type="text/javascript" src="bigi.min.js"></script>
+    <script type="text/javascript" src="crypto-js.min.js"></script>
     <script type="text/javascript" src="qrcode.js"></script>
 </head>
 <body>
@@ -15,6 +16,7 @@
     <h2>Turn Any Image Or Document Into A Bitcoin Private Key & Address</h2>
     <label for="files">Select a file you would like to turn into a Bitcoin address:</label>
     <input id="files" type="file" multiple/>
+    <p>Encrypt With A Password (Optional): <input type="text" id="password" type="password" onmouseover="mouseoverPass();" onmouseout="mouseoutPass();"></p>
     <p><a href="https://github.com/coreyphillips/bitimage" target='_blank' style="text-decoration: none;color:#29bb9c">View on GitHub</a></p>
     <output id="result" />
 </article>
@@ -85,9 +87,26 @@
     #bitcoinQr {
         margin-bottom: 0px;
     }
+
+    #reveal-password {
+        visibility: hidden;
+        font-weight:bold;
+    }
+
+    .encrypted-msg:hover #reveal-password {
+        visibility: visible;
+    }
 </style>
 
 <script>
+    function mouseoverPass(obj) {
+        var obj = document.getElementById('password');
+        obj.type = "text";
+    }
+    function mouseoutPass(obj) {
+        var obj = document.getElementById('password');
+        obj.type = "password";
+    }
     window.onload = function(){
 
         //Check File API support
@@ -109,8 +128,27 @@
 
                         var picFile = event.target;
 
+                        //Set password, passwordHash and errorMsg if password is present
+                        var password = "";
+                        var passwordHash = "";
+                        var encryptedMsg = "";
+                        if (document.getElementById("password").value) {
+                            password = document.getElementById("password").value;
+                            passwordHash = CryptoJS.SHA256(passwordHash).toString();
+                            encryptedMsg = "<span style='color:#ff6666'>Private Key & Address Encrypted With Password (Hover to Reveal): </span>"
+                        }
+
                         //Setup Bitcoin Address
                         var hash = Bitcoin.crypto.sha256(picFile.result);
+
+                        //Encrypt password if a password is present
+                        if (passwordHash) {
+                            hash = CryptoJS.SHA256(hash);
+                            hash = CryptoJS.AES.encrypt(hash, passwordHash);
+                            hash = Bitcoin.crypto.sha256(hash);
+                        }
+
+                        //Create Private Key & Address From Hash
                         var d = bigi.fromBuffer(hash);
                         var keyPair = new Bitcoin.ECPair(d);
                         var privateKey = keyPair.toWIF();
@@ -134,6 +172,7 @@
                             div.innerHTML =
                                     "<div class='container'><div class='cell'><div class='content'>" +
                                     "<img class='thumbnail' src='" + picFile.result + "'" + "title='" + fileName + "'/>" +
+                                    "<br /><div class='encrypted-msg'>"+ encryptedMsg +"<span id='reveal-password'>"+ password +"</span></div>" +
                                     "<br /><span>Bitcoin Address: </span><a href='"+ url +"' target='_blank'>" + address + "</a>" +
                                     "<p>Private Key: " + privateKey + "</p><p id='privKey'>Private Key:</p><p id='privQr'>"+ privQr.createImgTag() +"</p></div></div>" +
                                     "<div class='cell'><div class='content2'><p id='bitcoinQr' align='center'>Bitcoin Address</p>"+ qr.createImgTag() +"</div></div>" +
@@ -142,7 +181,8 @@
                             var url = "https://blockchain.info/address/"+address;
                             div.innerHTML =
                                     "<div class='container'><div class='cell'><div class='content'>" +
-                                    "<p class='filename'>"+ fileName +"</p><span>Bitcoin Address: </span><a href='"+ url +"' target='_blank'>" + address + "</a>" +
+                                    "<p class='filename'>"+ fileName +"</p><div class='encrypted-msg'>"+ encryptedMsg +"<span id='reveal-password'>"+ password +"</span></div>" +
+                                    "<br /><span>Bitcoin Address: </span><a href='"+ url +"' target='_blank'>" + address + "</a>" +
                                     "<p>Private Key: " + privateKey + "</p><p id='privKey'>Private Key:</p><p id='privQr'>"+ privQr.createImgTag() +"</p></div></div>" +
                                     "<div class='cell'><div class='content2'><p id='bitcoinQr' align='center'>Bitcoin Address</p>"+ qr.createImgTag() +"</div></div>" +
                                     "</div><hr>";
