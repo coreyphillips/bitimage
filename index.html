@@ -14,9 +14,9 @@
 </header>
 <article>
     <h2>Turn Any Image Or Document Into A Bitcoin Private Key & Address</h2>
-    <label for="files">Select a file you would like to turn into a Bitcoin address:</label>
+    <p>1) Encrypt With A Password (Optional): <input type="text" id="password" type="password" onmouseover="mouseoverPass();" onmouseout="mouseoutPass();"></p>
+    <label for="files">2) Select a file you would like to turn into a Bitcoin address:</label>
     <input id="files" type="file" multiple/>
-    <p>Encrypt With A Password (Optional): <input type="text" id="password" type="password" onmouseover="mouseoverPass();" onmouseout="mouseoutPass();"></p>
     <p><a href="https://github.com/coreyphillips/bitimage" target='_blank' style="text-decoration: none;color:#29bb9c">View on GitHub</a></p>
     <output id="result" />
 </article>
@@ -128,7 +128,7 @@
 
                         var picFile = event.target;
 
-                        //Set password, passwordHash and errorMsg if password is present
+                        //Set password, passwordHash and encryptedMsg if password is present
                         var password = "";
                         var passwordHash = "";
                         var encryptedMsg = "";
@@ -200,6 +200,7 @@
         }
         else
         {
+            alert("Your browser does not support File API");
             console.log("Your browser does not support File API");
         }
     }
