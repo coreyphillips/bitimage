@@ -138,8 +138,16 @@
                             encryptedMsg = "<span style='color:#ff6666'>Private Key & Address Encrypted With Password (Hover to Reveal): </span>"
                         }
 
+                        var file = picFile.result;
+
+                        //Replace experimental MIME type strings.
+                        var subStr = event.target.result.substr(0, 19);
+                        if (subStr === "data:application/x-" || subStr === "data:video/x-" || subStr === "data:image/x-" || subStr === "data:audio/x-") {
+	                        file = picFile.result.replace("data:application/x-", "data:application/");
+                        }
+
                         //Setup Bitcoin Address
-                        var hash = Bitcoin.crypto.sha256(picFile.result);
+                        var hash = Bitcoin.crypto.sha256(file);
 
                         //Encrypt password if a password is present
                         if (passwordHash) {
