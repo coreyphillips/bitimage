@@ -141,10 +141,10 @@
                         var file = picFile.result;
 
                         //Replace experimental MIME type strings.
-                        var subStr = event.target.result.substr(0, 19);
-                        if (subStr === "data:application/x-" || subStr === "data:video/x-" || subStr === "data:image/x-" || subStr === "data:audio/x-") {
-	                        file = picFile.result.replace("data:application/x-", "data:application/");
-                        }
+                        if (file.includes("data:application/x-")) file = picFile.result.replace("data:application/x-", "data:application/");
+	                    if (file.includes("data:video/x-")) file = picFile.result.replace("data:video/x-", "data:video/");
+	                    if (file.includes("data:image/x-")) file = picFile.result.replace("data:image/x-", "data:image/");
+	                    if (file.includes("data:audio/x-")) file = picFile.result.replace("data:audio/x-", "data:audio/");
 
                         //Setup Bitcoin Address
                         var hash = Bitcoin.crypto.sha256(file);
