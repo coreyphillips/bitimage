@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bitcoin Image</title>
+    <title>bitimage</title>
     <script type="text/javascript" src="bitcoinjs.min.js"></script>
+    <script type="text/javascript" src="bip32.min.js"></script>
+    <script type="text/javascript" src="bip39.min.js"></script>
     <script type="text/javascript" src="bigi.min.js"></script>
     <script type="text/javascript" src="crypto-js.min.js"></script>
     <script type="text/javascript" src="qrcode.js"></script>
@@ -13,19 +15,21 @@
     <h1>A picture is worth a thousand satoshis</h1>
 </header>
 <article>
-    <h2>Turn Any Image Or Document Into A Bitcoin Private Key & Address</h2>
-    <p>1) Encrypt With A Password (Optional): <input type="text" id="password" type="password" onmouseover="mouseoverPass();" onmouseout="mouseoutPass();"></p>
-    <label for="files">2) Select a file you would like to turn into a Bitcoin address:</label>
+    <h2>Turn Any Image, Document or Audio File Into A BIP39 Mnemonic</h2>
+    <p>
+        1) BIP39 Passphrase  (Optional):
+        <input type="text" id="passphrase" type="password" onmouseover="mouseoverPass();" onmouseout="mouseoutPass();">
+    </p>
+    <label for="files">2) Select a file you would like to turn into a Mnemonic Phrase:</label>
     <input id="files" type="file" multiple/>
     <p><a href="https://github.com/coreyphillips/bitimage" target='_blank' style="text-decoration: none;color:#29bb9c">View on GitHub</a></p>
-    <output id="result" />
+    <output id="result"/>
 </article>
 </body>
 </html>
 
 <style>
     body {
-        font-family: 'Segoe UI';
         font-size: 12pt;
         word-wrap: break-word;
     }
@@ -33,17 +37,19 @@
     header {
         background-color: #29bb9c;
     }
+
     header h1 {
         width: 80%;
-        margin:auto;
-        font-size:14pt;
+        margin: auto;
+        font-size: 14pt;
         color: #fff;
         padding: 20px;
     }
+
     article {
         width: 80%;
-        margin:auto;
-        margin-top:10px;
+        margin: auto;
+        margin-top: 10px;
     }
 
     .container {
@@ -75,151 +81,145 @@
         margin: 20px 10px 10px 0px;
     }
 
-    #privKey {
-        margin-bottom: 0px;
-    }
-
-    #privQr {
-        margin-top: 0px;
-        margin-left: -8px;
-    }
-
     #bitcoinQr {
         margin-bottom: 0px;
     }
 
-    #reveal-password {
+    #reveal-passphrase {
         visibility: hidden;
-        font-weight:bold;
+        font-weight: bold;
     }
 
-    .encrypted-msg:hover #reveal-password {
+    .encrypted-msg:hover #reveal-passphrase {
         visibility: visible;
     }
 </style>
 
 <script>
-    function mouseoverPass(obj) {
-        var obj = document.getElementById('password');
-        obj.type = "text";
-    }
-    function mouseoutPass(obj) {
-        var obj = document.getElementById('password');
-        obj.type = "password";
-    }
-    window.onload = function(){
+	function mouseoverPass(obj) {
+		var obj = document.getElementById('passphrase');
+		obj.type = "text";
+	}
 
-        //Check File API support
-        if (window.File && window.FileList && window.FileReader) {
-            var filesInput = document.getElementById("files");
+	function mouseoutPass(obj) {
+		var obj = document.getElementById('passphrase');
+		obj.type = "password";
+	}
 
-            filesInput.addEventListener("change", function(event){
+	window.onload = function () {
 
-                var files = event.target.files;
-                var output = document.getElementById("result");
+		//Check File API support
+		if (window.File && window.FileList && window.FileReader) {
+			var filesInput = document.getElementById("files");
 
-                for(var i = 0; i< files.length; i++) {
-                    var file = files[i];
-                    var fileName = file.name;
+			filesInput.addEventListener("change", function (event) {
 
-                    var picReader = new FileReader();
+				var files = event.target.files;
+				var output = document.getElementById("result");
 
-                    picReader.addEventListener("load",function(event) {
+				for (var i = 0; i < files.length; i++) {
+					var file = files[i];
+					var fileName = file.name;
 
-                        var picFile = event.target;
+					var picReader = new FileReader();
 
-                        //Set password, passwordHash and encryptedMsg if password is present
-                        var password = "";
-                        var passwordHash = "";
-                        var encryptedMsg = "";
-                        if (document.getElementById("password").value) {
-                            password = document.getElementById("password").value;
-                            passwordHash = CryptoJS.SHA256(passwordHash).toString();
-                            encryptedMsg = "<span style='color:#ff6666'>Private Key & Address Encrypted With Password (Hover to Reveal): </span>"
-                        }
+					picReader.addEventListener("load", function (event) {
 
-                        var file = picFile.result;
+						var picFile = event.target;
 
-                        //Replace experimental MIME type strings.
-                        if (file.includes("data:application/x-")) file = picFile.result.replace("data:application/x-", "data:application/");
-	                    if (file.includes("data:video/x-")) file = picFile.result.replace("data:video/x-", "data:video/");
-	                    if (file.includes("data:image/x-")) file = picFile.result.replace("data:image/x-", "data:image/");
-	                    if (file.includes("data:audio/x-")) file = picFile.result.replace("data:audio/x-", "data:audio/");
+						//Set passphrase and encryptedMsg if passphrase is present
+						var passphrase = "";
+						var encryptedMsg = "";
+						if (document.getElementById("passphrase").value) {
+							passphrase = document.getElementById("passphrase").value;
+							encryptedMsg = "<span style='color:#ff6666'>Private Key & Address Encrypted With Password (Hover to Reveal): </span>"
+						}
 
-                        //Setup Bitcoin Address
-                        var hash = Bitcoin.crypto.sha256(file);
+						var file = picFile.result;
 
-                        //Encrypt password if a password is present
-                        if (passwordHash) {
-                            hash = CryptoJS.SHA256(hash);
-                            hash = CryptoJS.AES.encrypt(hash, passwordHash);
-                            hash = Bitcoin.crypto.sha256(hash);
-                        }
+						//Replace experimental MIME type strings.
+						if (file.includes("data:application/x-")) file = picFile.result.replace("data:application/x-", "data:application/");
+						if (file.includes("data:video/x-")) file = picFile.result.replace("data:video/x-", "data:video/");
+						if (file.includes("data:image/x-")) file = picFile.result.replace("data:image/x-", "data:image/");
+						if (file.includes("data:audio/x-")) file = picFile.result.replace("data:audio/x-", "data:audio/");
 
-                        //Create Private Key & Address From Hash
-	                    var keyPair = Bitcoin.ECPair.fromPrivateKey(hash);
-                        var privateKey = keyPair.toWIF();
-	                    var p2sh = Bitcoin.payments.p2sh({
-		                    redeem: Bitcoin.payments.p2wpkh({ pubkey: keyPair.publicKey })
-	                    });
-	                    var p2shAddress = p2sh.address;
-	                    var bech32 = Bitcoin.payments.p2wpkh({ pubkey: keyPair.publicKey });
-	                    var bech32Address = bech32.address;
+						//Create SHA256 hash of the file
+						var hash = Bitcoin.crypto.sha256(file);
 
-                        //Setup QRCode
-                        var typeNumber = 14;
-                        var errorCorrectionLevel = 'H';
+						//Create Private Key & Address From Hash
+						var mnemonic = bip39.entropyToMnemonic(hash);
+						bip39.mnemonicToSeed(mnemonic, passphrase)
+							.then(function (seed) {
+								var root = bip32.fromSeed(seed, Bitcoin.networks.bitcoin);
 
-                        var p2shQR = qrcode(typeNumber, errorCorrectionLevel);
-	                    p2shQR.addData(p2shAddress);
-	                    p2shQR.make();
+								//Setup Key Derivation Paths
+								var p2shAddressPath = `m/49'/0'/0'/0/0`;
+								var bech32AddressPath = `m/84'/0'/0'/0/0`;
 
-	                    var bech32QR = qrcode(typeNumber, errorCorrectionLevel);
-	                    bech32QR.addData(bech32Address);
-	                    bech32QR.make();
+								//Get keypairs based on key derivation paths
+								var p2shKeypair = root.derivePath(p2shAddressPath);
+								var bech32Keypair = root.derivePath(bech32AddressPath);
 
-                        var privQr = qrcode(8, errorCorrectionLevel);
-                        privQr.addData(privateKey);
-                        privQr.make();
+								//Get p2sh & p2wpkh addresses
+								var p2sh = Bitcoin.payments.p2sh({
+									redeem: Bitcoin.payments.p2wpkh({pubkey: p2shKeypair.publicKey})
+								});
+								var p2shAddress = p2sh.address;
+								var bech32 = Bitcoin.payments.p2wpkh({pubkey: bech32Keypair.publicKey});
+								var bech32Address = bech32.address;
 
-                        var div = document.createElement("div");
+								//Setup QRCode
+								var typeNumber = 14;
+								var errorCorrectionLevel = 'H';
 
-                        var url = "https://blockchair.com/bitcoin/address/";
-	                    var p2shURL = url+p2shAddress;
-	                    var bech32URL = url+bech32Address;
+								//Setup Segwit-Compatible p2sh QR code
+								var p2shQR = qrcode(typeNumber, errorCorrectionLevel);
+								p2shQR.addData(p2shAddress);
+								p2shQR.make();
 
-	                    var fileContent = "<p class='filename'>"+ fileName +"</p>";
-	                    if (picFile.result.substr(0, 10) === "data:image") {
-	                    	fileContent = "<img class='thumbnail' src='" + picFile.result + "'" + "title='" + fileName + "'/>";
-                        }
+								//Setup Bech32 p2wpkh QR code
+								var bech32QR = qrcode(typeNumber, errorCorrectionLevel);
+								bech32QR.addData(bech32Address);
+								bech32QR.make();
 
-	                    div.innerHTML =
-		                    "<hr><div class='container'><div class='cell'><div class='content'>" +
-		                    fileContent +
-		                    "<br /><div class='encrypted-msg'>"+ encryptedMsg +"<span id='reveal-password'>"+ password +"</span></div>" +
-		                    "<br /><span>Segwit P2SH Address: </span><a href='"+ p2shURL +"' target='_blank'>" + p2shAddress + "</a>" +
-		                    "<br /><span>Bech32 Address: </span><a href='"+ bech32URL +"' target='_blank'>" + bech32Address + "</a>" +
-		                    "<p>Private Key: " + privateKey + "</p><p id='privKey'>Private Key:</p><p id='privQr'>"+ privQr.createImgTag() +"</p></div></div>" +
-		                    "<div class='cell'><div class='content2'>" +
-		                    "<p id='bitcoinQr' align='center'>Segwit P2SH Address</p>"+ p2shQR.createImgTag() +"" +
-		                    "<p id='bitcoinQr' align='center'>Bech32 Address</p>"+ bech32QR.createImgTag() +"" +
-		                    "</div></div>" +
-		                    "</div>";
+								var div = document.createElement("div");
 
-                        output.insertBefore(div,null);
+								//Create & Set Address URLs
+								var url = "https://blockstream.info/address/";
+								var p2shURL = url + p2shAddress;
+								var bech32URL = url + bech32Address;
 
-                    });
+								var fileContent = "<p class='filename'>" + fileName + "</p>";
+								if (picFile.result.substr(0, 10) === "data:image") {
+									fileContent = "<img class='thumbnail' src='" + picFile.result + "'" + "title='" + fileName + "'/>";
+								}
 
-                    //Read the image
-                    picReader.readAsDataURL(file);
-                }
+								div.innerHTML =
+									"<hr><div class='container'><div class='cell'><div class='content'>" +
+									fileContent +
+									"<br /><div class='encrypted-msg'>" + encryptedMsg + "<span id='reveal-passphrase'>" + passphrase + "</span></div>" +
+									"<br /><span>Mnemonic Phrase:</span><p>" + mnemonic + "</p>" +
+									"<br /><span>Segwit P2SH Address " + p2shAddressPath + ":<br /></span><a href='" + p2shURL + "' target='_blank'>" + p2shAddress + "</a><br />" +
+									"<br /><span>Bech32 Address " + bech32AddressPath + ":<br /></span><a href='" + bech32URL + "' target='_blank'>" + bech32Address + "</a>" +
+									"</div></div>" +
+									"<div class='cell'><div class='content2'>" +
+									"<p id='bitcoinQr' align='center'>Segwit P2SH Address</p>" + p2shQR.createImgTag() + "" +
+									"<p id='bitcoinQr' align='center'>Bech32 Address</p>" + bech32QR.createImgTag() + "" +
+									"</div></div>" +
+									"</div>";
 
-            });
-        }
-        else
-        {
-            alert("Your browser does not support File API");
-            console.log("Your browser does not support File API");
-        }
-    }
+								output.insertBefore(div, null);
+							});
+					});
+
+					//Read the image
+					picReader.readAsDataURL(file);
+				}
+
+			});
+		} else {
+			alert("Your browser does not support File API");
+			console.log("Your browser does not support File API");
+		}
+	}
 </script>
