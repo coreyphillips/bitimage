@@ -137,11 +137,11 @@
 
 						var file = picFile.result;
 
-						//Replace experimental MIME type strings.
-						if (file.includes("data:application/x-")) file = picFile.result.replace("data:application/x-", "data:application/");
-						if (file.includes("data:video/x-")) file = picFile.result.replace("data:video/x-", "data:video/");
-						if (file.includes("data:image/x-")) file = picFile.result.replace("data:image/x-", "data:image/");
-						if (file.includes("data:audio/x-")) file = picFile.result.replace("data:audio/x-", "data:audio/");
+						//Remove data:[<media type>][;base64], we only want the base64 <data> string.
+                        var n = 0;
+                        var word = ",";
+						if (file.includes(word)) n = file.lastIndexOf(word);
+						if (n > 0) file = file.slice(n+word.length, file.length);
 
 						//Create SHA256 hash of the file
 						var hash = Bitcoin.crypto.sha256(file);
