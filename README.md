@@ -16,9 +16,6 @@ This project turns any file into a mnemonic phrase allowing users to generate Bi
 #### Motivation
 This was simply a fun project created as a proof-of-concept. As I learn more about Bitcoin I become tempted to tinker and experiment. This is the result of one of those experiments.
 
-#### Fun & Games
-Taking inspiration from Andreas' use of steganography in [this image](https://twitter.com/aantonop/status/603701870482300928?lang=en) I have sent 0.01 BTC to the following address, [bc1qcyrndzgy036f6ax370g8zyvlw86ulawgt0246r](https://blockstream.info/address/bc1qcyrndzgy036f6ax370g8zyvlw86ulawgt0246r). This address was generated using the aforementioned image along with a BIP39 passphrase. If you manage to claim it, congrats! I'd also love to know how you managed to do it so please feel free to reach out.
-
 #### Contributing
 1. Fork it (<https://github.com/coreyphillips/bitimage>)
 2. Create your feature branch (`git checkout -b feature/fooBar`)
